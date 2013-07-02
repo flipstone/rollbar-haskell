@@ -2,7 +2,6 @@
 module Rollbar.MonadLogger where
 
 import BasicPrelude
-import Control.Monad.Logger
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Network.BSD (HostName)
 
@@ -16,8 +15,8 @@ reportErrorS :: (MonadIO m, MonadBaseControl IO m)
              => Text -- ^ environment (development, production, etc)
              -> HostName -- ^ computer
              -> Text -- ^ log section
-             -> (Text -> LoggingT m ()) -- ^ monad-logger logging function
+             -> (Text -> Text -> m ()) -- ^ monad-logger logging function. takes a section and a message
              -> Text -- ^ message
-             -> LoggingT m ()
+             -> m ()
 reportErrorS = reportLoggerErrorS
     

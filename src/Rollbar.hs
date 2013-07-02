@@ -2,7 +2,6 @@
 -- | Main entry point to the application.
 module Rollbar where
 
-import Language.Haskell.TH.Syntax
 import BasicPrelude
 import Data.Aeson
 import Data.Text (toLower)
@@ -30,18 +29,18 @@ reportErrorS :: (MonadIO m, MonadBaseControl IO m)
 reportErrorS env hostName section msg =
     reportLoggerErrorS section hostName env logMessage msg
   where
-    logMessage message = putStrLn $ "[Error#" `mappend` section `mappend` "] " `mappend` " " `mappend` message
+    logMessage sec message = putStrLn $ "[Error#" `mappend` sec `mappend` "] " `mappend` " " `mappend` message
 
 -- | used by Rollbar.MonadLogger to pass a custom logger
 reportLoggerErrorS :: (MonadIO m, MonadBaseControl IO m)
                    => Text -- ^ environment (development, production, etc)
                    -> HostName
                    -> Text -- ^ log section
-                   -> (Text -> m ()) -- ^ logger
+                   -> (Text -> Text -> m ()) -- ^ logger that takes the section and the message
                    -> Text -- ^ log message
                    -> m ()
 reportLoggerErrorS env hostName section logger msg = do
-    logger msg
+    log msg
     liftIO $ do
       -- It would be more efficient to have the user setup the manager
       -- But reporting errors should be infrequent
@@ -49,8 +48,9 @@ reportLoggerErrorS env hostName section logger msg = do
           initReq <- liftIO $ parseUrl "https://api.rollbar.com/api/1/item/"
           let req = initReq { method = "POST", requestBody = RequestBodyLBS $ encode json }
           http req manager
-    `catch` (\(e::SomeException) -> logger $ show e)
+    `catch` (\(e::SomeException) -> log $ show e)
   where
+    log = logger section
     json = object
         [ "access_token" .= "8c0692277f2e4393bb6cf42f2eb617c0"
         , "data" .= object
