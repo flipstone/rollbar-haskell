@@ -2,6 +2,7 @@
 -- | Main entry point to the application.
 module Rollbar where
 
+import Language.Haskell.TH.Syntax
 import BasicPrelude
 import Data.Aeson
 import Data.Text (toLower)
@@ -15,15 +16,14 @@ import Network.HTTP.Conduit
     , parseUrl
     , withManager
     , http )
+
     
 default (Text)
 
--- TODO: use monad-logger
--- that means this must be TH
--- need function in monad-logger for binding the logger at a different site
 
-logAnyErrorS :: (MonadIO m, MonadBaseControl IO m) => Text -> HostName -> Text -> Text -> m ()
-logAnyErrorS section hostName env msg = liftIO $ do
+
+reportPrintErrorS :: (MonadIO m, MonadBaseControl IO m) => Text -> HostName -> Text -> Text -> m ()
+reportPrintErrorS section hostName env msg = liftIO $ do
     logMessage msg
     -- It would be more efficient to have the user setup the manager
     -- But reporting errors should be infrequent

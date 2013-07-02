@@ -7,3 +7,5 @@ module-template: ! 'module MODULE_NAME where
 modules:
   Rollbar:
     filename: src/Rollbar.hs
+  Rollbar.MonadLogger:
+    filename: src/Rollbar/MonadLogger.hs
