@@ -12,7 +12,8 @@ default (Text)
 
 -- | report errors to rollbar.com and log them with monad-logger
 reportErrorS :: (MonadIO m, MonadBaseControl IO m)
-             => Text -- ^ environment (development, production, etc)
+             => Text -- ^ access token
+             -> Text -- ^ environment (development, production, etc)
              -> HostName -- ^ computer
              -> Text -- ^ log section
              -> (Text -> Text -> m ()) -- ^ monad-logger logging function. takes a section and a message
