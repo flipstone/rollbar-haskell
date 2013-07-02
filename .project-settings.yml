@@ -4,4 +4,6 @@ version: 1
 module-template: ! 'module MODULE_NAME where
 
 '
-modules: {}
+modules:
+  Rollbar:
+    filename: src/Rollbar.hs
