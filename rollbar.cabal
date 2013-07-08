@@ -1,0 +1,29 @@
+name:                rollbar
+version:             0.2.0.0
+synopsis:            error notification to rollbar.com
+-- description:         
+homepage:            https://github.com/gregwebs/rollbar-haskell
+license:             MIT
+author:              Greg Weber
+maintainer:          greg@gregweber.info
+-- copyright:           
+-- category:            
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  ghc-options: -Wall
+
+  exposed-modules:     Rollbar, Rollbar.MonadLogger
+  -- other-modules:       
+  build-depends:
+      base >=4.6 && < 5
+    , text
+    , aeson
+    , vector
+    , network
+    , basic-prelude
+    , monad-control
+    , http-conduit
+
+  hs-source-dirs:      src
