@@ -1,13 +1,13 @@
 name:                rollbar
-version:             0.2.0.0
-synopsis:            error notification to rollbar.com
+version:             0.2.0.1
+synopsis:            error tracking through rollbar.com
 -- description:         
-homepage:            https://github.com/gregwebs/rollbar-haskell
+homepage:            https://github.com/docmunch/rollbar-haskell
 license:             MIT
-author:              Greg Weber
-maintainer:          greg@gregweber.info
--- copyright:           
--- category:            
+author:              Daggerboard Inc. Greg Weber
+maintainer:          Greg Weber <greg@gregweber.info>
+copyright:           Daggerboard Inc. makers of docmunch.com
+category:            Logging
 build-type:          Simple
 cabal-version:       >=1.8
 
@@ -27,3 +27,7 @@ library
     , http-conduit
 
   hs-source-dirs:      src
+
+source-repository head
+  type:     git
+  location: git://github.com/docmunch/rollbar-haskell.git
