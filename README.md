@@ -38,15 +38,15 @@ We have some code like this to setup our environment and enable rollbar notifica
 ``` haskell
 setupNotifierS section = do
     hostName <- liftIO $ getHostName
-    env <- runErrorT getAppEnv »= \case
+    env <- runErrorT getAppEnv >>= \case
       Left err -> do
         runStdoutLoggingT $ reportErrorS token "NONE" hostName section ($logErrorS) err 
         exitInt 1
-      Right environ → return environ
+      Right environ -> return environ
 
     let reportError = reportErrorS token env hostName section
     let reportException logger = \(e :: SomeException) -> reportError logger (show e)
-    let handleException logger = handle (λ(e :: SomeException) -> (reportErrorS token env hostName sectio  n logger (show e)) >> throwError (show e))
+    let handleException logger = handle (\(e :: SomeException) -> (reportErrorS token env hostName sectio  n logger (show e)) >> throwError (show e))
     return (handleException, reportException, reportError, env)
   where
     token = "my-rollbar-token"
