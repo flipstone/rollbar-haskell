@@ -51,3 +51,21 @@ setupNotifierS section = do
   where
     token = "my-rollbar-token"
 ```
+
+In Yesod, your code would look something like this
+
+``` haskell
+data RollbarConfig = RollbarConfig Text Text HostName
+applyRollbarConfig ∷ (MonadIO m, MonadBaseControl IO m)
+                   => RollbarConfig -> Text -> (Text -> Text -> m ()) -> Text -> m ()
+applyRollbarConfig (RollbarConfig token env hostName) = reportErrorS token env hostName
+
+-- in your Yesod typeclass definition
+errorHandler err@(InternalError e) = do
+    app <- getYesod
+    unless development $ void $ liftIO $ forkIO $ runLoggerT $
+        applyRollbarConfig (appRollbar app) "errorHandler" $logWarnS e
+    defaultErrorHandler err 
+
+errorHandler err = defaultErrorHandler err
+```
