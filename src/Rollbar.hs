@@ -1,4 +1,5 @@
 {-# Language NoImplicitPrelude, OverloadedStrings, ExtendedDefaultRules, FlexibleContexts, ScopedTypeVariables #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 -- | Main entry point to the application.
 module Rollbar where
 
@@ -25,8 +26,8 @@ reportErrorS :: (MonadIO m, MonadBaseControl IO m)
              -> Text -- ^ log section
              -> Text -- ^ log message
              -> m ()
-reportErrorS token env hostName section msg =
-    reportLoggerErrorS token env hostName section logMessage msg
+reportErrorS token env hostName section =
+    reportLoggerErrorS token env hostName section logMessage
   where
     logMessage sec message = putStrLn $ "[Error#" `mappend` sec `mappend` "] " `mappend` " " `mappend` message
 
@@ -41,7 +42,7 @@ reportLoggerErrorS :: (MonadIO m, MonadBaseControl IO m)
                    -> m ()
 reportLoggerErrorS token env hostName section loggerS msg = do
     logger msg
-    liftIO $ do
+    liftIO $
       -- It would be more efficient to have the user setup the manager
       -- But reporting errors should be infrequent
       void $ withManager $ \manager -> do
@@ -65,5 +66,10 @@ reportLoggerErrorS token env hostName section loggerS msg = do
                     ]
                 ]
             ]
+        , "title" .= (section <> ": " <> msg)
+        , "notifier" .= object [
+            "name"    .= "rollbar-haskell"
+          , "version" .= "0.2.1"
+          ]
         ]
 
