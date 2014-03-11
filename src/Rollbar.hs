@@ -66,7 +66,7 @@ reportLoggerErrorS token env hostName section loggerS msg = do
                     ]
                 ]
             ]
-        , "title" .= (section <> ": " <> msg)
+        , "title" .= msg
         , "notifier" .= object [
             "name"    .= "rollbar-haskell"
           , "version" .= "0.2.1"
