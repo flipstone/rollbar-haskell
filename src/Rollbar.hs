@@ -1,10 +1,11 @@
-{-# Language NoImplicitPrelude, OverloadedStrings, ExtendedDefaultRules, FlexibleContexts, ScopedTypeVariables #-}
+{-# Language TemplateHaskell, NoImplicitPrelude, OverloadedStrings, ExtendedDefaultRules, FlexibleContexts, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 -- | Main entry point to the application.
 module Rollbar where
 
 import BasicPrelude
 import Data.Aeson
+import Data.Aeson.TH hiding (Options)
 import Data.Text (toLower)
 import qualified Data.Vector as V
 import Network.BSD (HostName)
@@ -18,29 +19,53 @@ import Network.HTTP.Conduit
 
 default (Text)
 
+newtype ApiToken = ApiToken { unApiToken :: Text } deriving Show
+
+-- (development, production, etc)
+newtype Environment = Environment { unEnvironment :: Text } deriving Show
+
+data Person = Person
+               { id       :: Text
+               , username :: Maybe Text
+               , email    :: Maybe Text
+               } deriving Show
+deriveToJSON defaultOptions ''Person
+
+data Settings = Settings
+                  { environment :: Environment
+                  , token       :: ApiToken
+                  , hostName    :: HostName
+                  } deriving Show
+
+data Options = Options
+       { person   :: Maybe Person
+       , revisionSha :: Maybe Text
+       } deriving Show 
+
+emptyOptions :: Options
+emptyOptions = Options Nothing Nothing
+
 -- | report errors to rollbar.com and log them to stdout
 reportErrorS :: (MonadIO m, MonadBaseControl IO m)
-             => Text -- ^ access token
-             -> Text -- ^ environment (development, production, etc)
-             -> HostName
+             => Settings
+             -> Options
              -> Text -- ^ log section
              -> Text -- ^ log message
              -> m ()
-reportErrorS token env hostName section =
-    reportLoggerErrorS token env hostName section logMessage
+reportErrorS settings opts section =
+    reportLoggerErrorS settings opts section logMessage
   where
     logMessage sec message = putStrLn $ "[Error#" `mappend` sec `mappend` "] " `mappend` " " `mappend` message
 
 -- | used by Rollbar.MonadLogger to pass a custom logger
 reportLoggerErrorS :: (MonadIO m, MonadBaseControl IO m)
-                   => Text -- ^ access token
-                   -> Text -- ^ environment (development, production, etc)
-                   -> HostName
+                   => Settings
+                   -> Options
                    -> Text -- ^ log section
                    -> (Text -> Text -> m ()) -- ^ logger that takes the section and the message
                    -> Text -- ^ log message
                    -> m ()
-reportLoggerErrorS token env hostName section loggerS msg = do
+reportLoggerErrorS settings opts section loggerS msg = do
     logger msg
     liftIO $
       -- It would be more efficient to have the user setup the manager
@@ -51,22 +76,24 @@ reportLoggerErrorS token env hostName section loggerS msg = do
           http req manager
     `catch` (\(e::SomeException) -> logger $ show e)
   where
+    title = section <> ": " <> msg
     logger = loggerS section
     rollbarJson = object
-        [ "access_token" .= token
+        [ "access_token" .= unApiToken (token settings)
         , "data" .= object
-            [ "environment" .= toLower env
+            [ "environment" .= toLower (unEnvironment $ environment settings)
             , "level"       .= ("error" :: Text)
-            , "server"      .= object [ "host" .= hostName ]
-            , "custom"      .= object []
+            , "server"      .= object [ "host" .= hostName settings, "sha" .= revisionSha opts]
+            , "person"      .= toJSON (person opts)
+            -- , "custom"      .= object []
             , "body"        .= object
                 [ "trace" .= object
                     [ "frames" .= (Array $ V.fromList [])
-                    , "exception" .= object ["class" .= section, "message" .= msg]
+                    , "exception" .= object ["class" .= title, "message" .= title]
                     ]
                 ]
             ]
-        , "title" .= msg
+        , "title" .= title
         , "notifier" .= object [
             "name"    .= "rollbar-haskell"
           , "version" .= "0.2.1"
