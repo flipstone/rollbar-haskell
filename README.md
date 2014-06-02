@@ -63,7 +63,7 @@ applyRollbarConfig (RollbarConfig token env hostName) = reportErrorS token env h
 -- in your Yesod typeclass definition
 errorHandler err@(InternalError e) = do
     app <- getYesod
-    unless development $ void $ liftIO $ forkIO $ runLoggerT $
+    unless development $ void $ liftIO $ forkIO $ runStdoutLoggingT $
         applyRollbarConfig (appRollbar app) "errorHandler" $logWarnS e
     defaultErrorHandler err 
 
