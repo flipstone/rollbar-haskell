@@ -15,7 +15,11 @@ Rollbar has:
 Usage
 =====
 
-Here is some example Yesod code
+Below is some example Yesod code.
+Integration should be similar elsewhere:
+
+1) (optional) save Settings at startup
+2) have a global exception handler that notifies Rollbar
 
 ``` haskell
 
@@ -35,8 +39,17 @@ Here is some example Yesod code
 import qualified Rollbar
 import Rollbar.MonadLogger (reportErrorS)
 
+-- Add a field to the foundation data type
+data App = App {
+    ...
+  , appRollbar :: Rollbar.Settings
+  }
+
+
 errorHandler err@(InternalError e) = do
     app <- getYesod
+    -- forking means error reporting to Rollbar won't hold up
+    -- the response to the client
     unless development $ forkHandler ($logErrorS "errorHandler" . tshow) $ do
         muser <- maybeAuth
         let rollbarPerson (Entity uid user) =
