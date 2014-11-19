@@ -89,7 +89,7 @@ reportLoggerErrorS settings opts section loggerS msg = do
             , "body"        .= object
                 [ "trace" .= object
                     [ "frames" .= (Array $ V.fromList [])
-                    , "exception" .= object ["class" .= title, "message" .= title]
+                    , "exception" .= object ["class" .= section, "message" .= msg]
                     ]
                 ]
             ]
