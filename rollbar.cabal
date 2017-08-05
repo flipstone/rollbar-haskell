@@ -1,11 +1,11 @@
 name:                rollbar
-version:             0.3.1
+version:             0.4.0
 synopsis:            error tracking through rollbar.com
 -- description:
-homepage:            https://github.com/docmunch/rollbar-haskell
+homepage:            https://github.com/azara/rollbar-haskell
 license:             MIT
 author:              Daggerboard Inc. Greg Weber
-maintainer:          Greg Weber <greg@gregweber.info>
+maintainer:          Azara <azara@engineering.com>
 copyright:           Daggerboard Inc. makers of docmunch.com
 category:            Logging
 build-type:          Simple
@@ -31,4 +31,4 @@ library
 
 source-repository head
   type:     git
-  location: git://github.com/docmunch/rollbar-haskell.git
+  location: git://github.com/azara/rollbar-haskell.git
