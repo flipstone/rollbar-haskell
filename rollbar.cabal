@@ -1,7 +1,7 @@
 name:                rollbar
 version:             0.3.1
 synopsis:            error tracking through rollbar.com
--- description:         
+-- description:
 homepage:            https://github.com/docmunch/rollbar-haskell
 license:             MIT
 author:              Daggerboard Inc. Greg Weber
@@ -15,7 +15,7 @@ library
   ghc-options: -Wall
 
   exposed-modules:     Rollbar, Rollbar.MonadLogger
-  -- other-modules:       
+  -- other-modules:
   build-depends:
       base >=4.6 && < 5
     , text
@@ -24,6 +24,7 @@ library
     , network
     , basic-prelude
     , monad-control
+    , resourcet
     , http-conduit
 
   hs-source-dirs:      src

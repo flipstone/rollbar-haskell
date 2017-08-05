@@ -6,15 +6,17 @@ module Rollbar where
 import BasicPrelude
 import Data.Aeson
 import Data.Aeson.TH hiding (Options)
-import Data.Text (toLower)
+import Data.Text (toLower, pack)
 import qualified Data.Vector as V
 import Network.BSD (HostName)
 import Control.Monad.Trans.Control (MonadBaseControl)
+import Control.Monad.Trans.Resource (runResourceT)
 import Network.HTTP.Conduit
     ( RequestBody(RequestBodyLBS)
     , Request(method, requestBody)
-    , parseUrl
-    , withManager
+    , parseUrlThrow
+    , newManager
+    , tlsManagerSettings
     , http )
 
 default (Text)
@@ -40,7 +42,7 @@ data Settings = Settings
 data Options = Options
        { person   :: Maybe Person
        , revisionSha :: Maybe Text
-       } deriving Show 
+       } deriving Show
 
 emptyOptions :: Options
 emptyOptions = Options Nothing Nothing
@@ -67,14 +69,15 @@ reportLoggerErrorS :: (MonadIO m, MonadBaseControl IO m)
                    -> m ()
 reportLoggerErrorS settings opts section loggerS msg = do
     logger msg
-    liftIO $
+    liftIO $ do
       -- It would be more efficient to have the user setup the manager
       -- But reporting errors should be infrequent
-      void $ withManager $ \manager -> do
-          initReq <- liftIO $ parseUrl "https://api.rollbar.com/api/1/item/"
-          let req = initReq { method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson }
-          http req manager
-    `catch` (\(e::SomeException) -> logger $ show e)
+
+      initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
+      manager <- newManager tlsManagerSettings
+      let req = initReq { method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson }
+      runResourceT $ void $ http req manager
+    `catch` (\(e::SomeException) -> logger $ pack $ show e)
   where
     title = section <> ": " <> msg
     logger = loggerS section
@@ -99,4 +102,3 @@ reportLoggerErrorS settings opts section loggerS msg = do
           , "version" .= "0.2.1"
           ]
         ]
-
