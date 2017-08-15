@@ -34,9 +34,10 @@ data Person = Person
 deriveToJSON defaultOptions ''Person
 
 data Settings = Settings
-                  { environment :: Environment
-                  , token       :: ApiToken
-                  , hostName    :: HostName
+                  { environment  :: Environment
+                  , token        :: ApiToken
+                  , hostName     :: HostName
+                  , reportErrors :: Bool
                   } deriving Show
 
 data Options = Options
@@ -67,18 +68,24 @@ reportLoggerErrorS :: (MonadIO m, MonadBaseControl IO m)
                    -> (Text -> Text -> m ()) -- ^ logger that takes the section and the message
                    -> Text -- ^ log message
                    -> m ()
-reportLoggerErrorS settings opts section loggerS msg = do
-    logger msg
-    liftIO $ do
-      -- It would be more efficient to have the user setup the manager
-      -- But reporting errors should be infrequent
-
-      initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
-      manager <- newManager tlsManagerSettings
-      let req = initReq { method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson }
-      runResourceT $ void $ http req manager
-    `catch` (\(e::SomeException) -> logger $ pack $ show e)
+reportLoggerErrorS settings opts section loggerS msg =
+    if reportErrors settings then
+        go
+    else
+        return ()
   where
+    go = do
+      logger msg
+      liftIO $ do
+        -- It would be more efficient to have the user setup the manager
+        -- But reporting errors should be infrequent
+
+        initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
+        manager <- newManager tlsManagerSettings
+        let req = initReq { method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson }
+        runResourceT $ void $ http req manager
+      `catch` (\(e::SomeException) -> logger $ pack $ show e)
+
     title = section <> ": " <> msg
     logger = loggerS section
     rollbarJson = object

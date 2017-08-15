@@ -1,12 +1,12 @@
 name:                rollbar
-version:             0.4.1
+version:             1.0.0
 synopsis:            error tracking through rollbar.com
 -- description:
 homepage:            https://github.com/azara/rollbar-haskell
 license:             MIT
-author:              Daggerboard Inc. Greg Weber
+author:              Daggerboard Inc. Greg Weber, Azara Solutions Inc. Jeff Taggart
 maintainer:          Azara <engineering@azara.io>, Jeff Taggart <jeff@jetaggart.com>, Steven MacCoun <theraccoun@gmail.com>
-copyright:           Daggerboard Inc. makers of docmunch.com
+copyright:           Daggerboard Inc. makers of docmunch.com, Azara Solutions Inc.
 category:            Logging
 build-type:          Simple
 cabal-version:       >=1.8
