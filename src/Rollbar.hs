@@ -22,6 +22,9 @@ import Data.Aeson hiding (Options)
 #else
 import Data.Aeson
 #endif
+#if MIN_VERSION_basic_prelude(0,7,0)
+import Control.Exception.Lifted (catch)
+#endif
 
 default (Text)
 

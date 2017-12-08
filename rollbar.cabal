@@ -26,6 +26,7 @@ library
     , monad-control
     , resourcet
     , http-conduit
+    , lifted-base
 
   hs-source-dirs:      src
 
