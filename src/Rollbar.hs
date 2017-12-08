@@ -1,10 +1,9 @@
-{-# Language TemplateHaskell, NoImplicitPrelude, OverloadedStrings, ExtendedDefaultRules, FlexibleContexts, ScopedTypeVariables #-}
+{-# Language CPP, TemplateHaskell, NoImplicitPrelude, OverloadedStrings, ExtendedDefaultRules, FlexibleContexts, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 -- | Main entry point to the application.
 module Rollbar where
 
 import BasicPrelude
-import Data.Aeson
 import Data.Aeson.TH hiding (Options)
 import Data.Text (toLower, pack)
 import qualified Data.Vector as V
@@ -18,6 +17,11 @@ import Network.HTTP.Conduit
     , newManager
     , tlsManagerSettings
     , http )
+#if MIN_VERSION_aeson(1,2,0)
+import Data.Aeson hiding (Options)
+#else
+import Data.Aeson
+#endif
 
 default (Text)
 
