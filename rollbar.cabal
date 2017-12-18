@@ -1,5 +1,5 @@
 name:                rollbar
-version:             1.0.0
+version:             1.1.0
 synopsis:            error tracking through rollbar.com
 -- description:
 homepage:            https://github.com/azara/rollbar-haskell
