@@ -93,26 +93,72 @@ reportLoggerErrorS settings opts section loggerS msg =
         runResourceT $ void $ http req manager
       `catch` (\(e::SomeException) -> logger $ pack $ show e)
 
-    title = section <> ": " <> msg
     logger = loggerS section
-    rollbarJson = object
-        [ "access_token" .= unApiToken (token settings)
-        , "data" .= object
-            [ "environment" .= toLower (unEnvironment $ environment settings)
-            , "level"       .= ("error" :: Text)
-            , "server"      .= object [ "host" .= hostName settings, "sha" .= revisionSha opts]
-            , "person"      .= toJSON (person opts)
-            -- , "custom"      .= object []
-            , "body"        .= object
-                [ "trace" .= object
-                    [ "frames" .= (Array $ V.fromList [])
-                    , "exception" .= object ["class" .= section, "message" .= msg]
-                    ]
-                ]
-            ]
-        , "title" .= title
-        , "notifier" .= object [
-            "name"    .= "rollbar-haskell"
-          , "version" .= "0.2.1"
-          ]
+    rollbarJson = buildJSON settings opts section msg Nothing
+
+
+-- | Pass in custom fingerprint for grouping on rollbar
+reportErrorSCustomFingerprint :: (MonadIO m, MonadBaseControl IO m)
+                   => Settings
+                   -> Options
+                   -> Text -- ^ log section
+                   -> Maybe (Text -> Text -> m ()) -- ^ logger that takes the section and the message
+                   -> Text -- ^ log message
+                   -> Text -- fingerprint
+                   -> m ()
+reportErrorSCustomFingerprint settings opts section loggerS msg fingerprint =
+    if reportErrors settings then
+        go
+    else
+        return ()
+  where
+    go = do
+      logger msg
+      liftIO $ do
+        initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
+        manager <- newManager tlsManagerSettings
+        let req = initReq { method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson }
+        runResourceT $ void $ http req manager
+      `catch` (\(e::SomeException) -> logger $ pack $ show e)
+
+    logger = fromMaybe defaultLogger loggerS section
+    defaultLogger message = pure $ putStrLn $ "[Error#" `mappend` section `mappend` "] " `mappend` " " `mappend` message
+    rollbarJson = buildJSON settings opts section msg (Just fingerprint)
+
+
+
+buildJSON :: Settings
+   -> Options
+   -> Text -- ^ log section
+   -> Text -- ^ log message
+   -> Maybe Text -- fingerprint
+   -> Value
+buildJSON settings opts section msg fingerprint =
+  object
+      [ "access_token" .= unApiToken (token settings)
+      , "data" .= object
+          ([ "environment" .= toLower (unEnvironment $ environment settings)
+          , "level"       .= ("error" :: Text)
+          , "server"      .= object [ "host" .= hostName settings, "sha" .= revisionSha opts]
+          , "person"      .= toJSON (person opts)
+          , "body"        .= object
+              [ "trace" .= object
+                  [ "frames" .= (Array $ V.fromList [])
+                  , "exception" .= object ["class" .= section, "message" .= msg]
+                  ]
+              ]
+          ] ++ fp)
+      , "title" .= title
+      , "notifier" .= object [
+          "name"    .= "rollbar-haskell"
+        , "version" .= "1.1.1"
         ]
+      ]
+  where
+    title = section <> ": " <> msg
+    fp =
+      case fingerprint of
+        Just fp' ->
+          ["fingerprint" .= fp']
+        Nothing ->
+          []
