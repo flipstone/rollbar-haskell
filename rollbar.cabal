@@ -27,6 +27,7 @@ library
     , resourcet
     , http-conduit
     , lifted-base
+    , network-bsd
 
   hs-source-dirs:      src
 
