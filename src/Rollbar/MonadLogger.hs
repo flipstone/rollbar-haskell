@@ -5,6 +5,8 @@ import BasicPrelude
 
 import Rollbar
 
+import GHC.Stack (CallStack)
+
 default (Text)
 
 
@@ -13,6 +15,7 @@ reportErrorS :: Settings
              -> Options
              -> Text -- ^ log section
              -> (Text -> Text -> IO ()) -- ^ monad-logger logging function. takes a section and a message
+             -> Maybe CallStack
              -> Text -- ^ message
              -> IO ()
 reportErrorS = reportLoggerErrorS

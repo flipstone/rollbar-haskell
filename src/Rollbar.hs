@@ -25,6 +25,7 @@ import Data.Aeson
 #if MIN_VERSION_basic_prelude(0,7,0)
 import Control.Exception.Lifted (catch)
 #endif
+import GHC.Stack (CallStack, SrcLoc(..), getCallStack)
 
 default (Text)
 
@@ -60,10 +61,11 @@ reportErrorS :: (MonadIO m, MonadBaseControl IO m)
              => Settings
              -> Options
              -> Text -- ^ log section
+             -> Maybe CallStack
              -> Text -- ^ log message
              -> m ()
-reportErrorS settings opts section =
-    reportLoggerErrorS settings opts section logMessage
+reportErrorS settings opts section callstack =
+    reportLoggerErrorS settings opts section logMessage callstack
   where
     logMessage sec message = putStrLn $ "[Error#" `mappend` sec `mappend` "] " `mappend` " " `mappend` message
 
@@ -73,9 +75,10 @@ reportLoggerErrorS :: (MonadIO m, MonadBaseControl IO m)
                    -> Options
                    -> Text -- ^ log section
                    -> (Text -> Text -> m ()) -- ^ logger that takes the section and the message
+                   -> Maybe CallStack
                    -> Text -- ^ log message
                    -> m ()
-reportLoggerErrorS settings opts section loggerS msg =
+reportLoggerErrorS settings opts section loggerS callstack msg =
     if reportErrors settings then
         go
     else
@@ -94,7 +97,7 @@ reportLoggerErrorS settings opts section loggerS msg =
       `catch` (\(e::SomeException) -> logger $ pack $ show e)
 
     logger = loggerS section
-    rollbarJson = buildJSON settings opts section msg Nothing
+    rollbarJson = buildJSON settings opts section msg Nothing callstack
 
 
 -- | Pass in custom fingerprint for grouping on rollbar
@@ -105,8 +108,9 @@ reportErrorSCustomFingerprint :: (MonadIO m, MonadBaseControl IO m)
                    -> Maybe (Text -> Text -> m ()) -- ^ logger that takes the section and the message
                    -> Text -- ^ log message
                    -> Text -- fingerprint
+                   -> Maybe CallStack
                    -> m ()
-reportErrorSCustomFingerprint settings opts section loggerS msg fingerprint =
+reportErrorSCustomFingerprint settings opts section loggerS msg fingerprint callstack =
     if reportErrors settings then
         go
     else
@@ -123,17 +127,26 @@ reportErrorSCustomFingerprint settings opts section loggerS msg fingerprint =
 
     logger = fromMaybe defaultLogger loggerS section
     defaultLogger message = pure $ putStrLn $ "[Error#" `mappend` section `mappend` "] " `mappend` " " `mappend` message
-    rollbarJson = buildJSON settings opts section msg (Just fingerprint)
+    rollbarJson = buildJSON settings opts section msg (Just fingerprint) callstack
 
-
+buildFrameJSON :: (String, SrcLoc) -> Value
+buildFrameJSON (name, srcLoc) =
+  object
+    [ "filename" .= String (pack $ srcLocFile srcLoc)
+    , "method" .= String (pack name)
+    , "lineno" .= toJSON (srcLocStartLine srcLoc)
+    , "colno" .= toJSON (srcLocStartCol srcLoc)
+    , "class_name" .= String (pack $ srcLocModule srcLoc)
+    ]
 
 buildJSON :: Settings
    -> Options
    -> Text -- ^ log section
    -> Text -- ^ log message
-   -> Maybe Text -- fingerprint
+   -> Maybe Text -- ^ fingerprint
+   -> Maybe CallStack
    -> Value
-buildJSON settings opts section msg fingerprint =
+buildJSON settings opts section msg fingerprint callstack =
   object
       [ "access_token" .= unApiToken (token settings)
       , "data" .= object
@@ -143,7 +156,7 @@ buildJSON settings opts section msg fingerprint =
           , "person"      .= toJSON (person opts)
           , "body"        .= object
               [ "trace" .= object
-                  [ "frames" .= (Array $ V.fromList [])
+                  [ "frames" .= (Array $ V.fromList $ maybe [] (map buildFrameJSON . getCallStack) callstack)
                   , "exception" .= object ["class" .= section, "message" .= msg]
                   ]
               ]
