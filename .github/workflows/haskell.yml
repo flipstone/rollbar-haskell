@@ -1,4 +1,4 @@
-name: Redcard CI
+name: Rollbar-Haskell CI
 
 on:
   push:
