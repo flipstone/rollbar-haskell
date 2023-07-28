@@ -1,36 +1,41 @@
-name:                rollbar
-version:             1.1.2
-synopsis:            error tracking through rollbar.com
--- description:
-homepage:            https://github.com/azara/rollbar-haskell
-license:             MIT
-author:              Daggerboard Inc. Greg Weber, Azara Solutions Inc. Jeff Taggart
-maintainer:          Azara <engineering@azara.io>, Jeff Taggart <jeff@jetaggart.com>, Steven MacCoun <theraccoun@gmail.com>
-copyright:           Daggerboard Inc. makers of docmunch.com, Azara Solutions Inc.
-category:            Logging
-build-type:          Simple
-cabal-version:       >=1.8
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           rollbar
+version:        2.0.0
+synopsis:       error tracking through rollbar.com
+category:       Logging
+homepage:       https://github.com/flipstone/rollbar-haskell
+author:         Flipstone Technology Partners
+maintainer:     development@flipstone.com
+copyright:      Daggerboard Inc. makers of docmunch.com, Azara Solutions Inc.
+license:        MIT
+build-type:     Simple
 
 library
-  ghc-options: -Wall
-
-  exposed-modules:     Rollbar, Rollbar.MonadLogger
-  -- other-modules:
+  exposed-modules:
+      Rollbar
+      Rollbar.MonadLogger
+  other-modules:
+      Paths_rollbar
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -Werror -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fno-warn-orphans
   build-depends:
-      base >=4.6 && < 5
-    , text
-    , aeson
-    , vector
-    , network
-    , basic-prelude
-    , monad-control
-    , resourcet
-    , http-conduit
-    , lifted-base
-    , network-bsd
-
-  hs-source-dirs:      src
-
-source-repository head
-  type:     git
-  location: git://github.com/azara/rollbar-haskell.git
+      aeson >=1.2 && <2.2
+    , base >=4.6 && <5
+    , basic-prelude ==0.7.*
+    , http-conduit >=2.2 && <2.4
+    , lifted-base ==0.2.3.*
+    , monad-control >=1.0.2 && <1.0.4
+    , network >=2.6 && <3.2
+    , network-bsd ==2.8.*
+    , resourcet >=1.1 && <1.3
+    , text >=1.2 && <2.1
+    , vector >=0.12 && <0.14
+  default-language: Haskell2010

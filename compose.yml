@@ -1,0 +1,18 @@
+services:
+  dev:
+    image: ghcr.io/flipstone/haskell-tools:debian-unstable-ghc-9.4.5-2023-07-18-1d8bf61
+    environment:
+      STACK_ROOT: /stack-root
+      IN_DEV_CONTAINER: 'true'
+      # Pass through the CI variable from GitHub (or set it to `true` locally
+      # for debugging CI builds)
+      CI:
+    volumes:
+      - .:${PROJECT_DIR}
+      - flipstone_stack_root:/stack-root
+    working_dir: ${PROJECT_DIR}
+    tty: true
+
+volumes:
+  flipstone_stack_root:
+    external: true

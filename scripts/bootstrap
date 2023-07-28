@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -e
+
+if $(docker volume inspect flipstone_stack_root >/dev/null 2>/dev/null); then
+  echo "Skipping creation of flipstone_stack_root docker volume. It already exists"
+else
+  echo "Creating flipstone_stack_root docker volume"
+  docker volume create flipstone_stack_root
+fi
+
+if [ -f .env ]; then
+  echo "Skipping creation of .env because it already exists. Remove it if you want to this script to recreate it"
+else
+  echo "PROJECT_DIR=$PWD" >> .env
+fi

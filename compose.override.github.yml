@@ -1,0 +1,5 @@
+services:
+  dev:
+    tty: false
+    volumes:
+      - ./stack-root:/stack-root

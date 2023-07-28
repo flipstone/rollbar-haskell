@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec docker-compose \
+  run --rm -T \
+  dev haskell-language-server-wrapper "$@"

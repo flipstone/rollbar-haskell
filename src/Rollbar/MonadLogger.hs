@@ -1,4 +1,7 @@
-{-# Language NoImplicitPrelude, FlexibleContexts, OverloadedStrings, ExtendedDefaultRules #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Rollbar.MonadLogger where
 
 import BasicPrelude
@@ -9,14 +12,16 @@ import GHC.Stack (CallStack)
 
 default (Text)
 
-
 -- | report errors to rollbar.com and log them with monad-logger
-reportErrorS :: Settings
-             -> Options
-             -> Text -- ^ log section
-             -> (Text -> Text -> IO ()) -- ^ monad-logger logging function. takes a section and a message
-             -> Maybe CallStack
-             -> Text -- ^ message
-             -> IO ()
+reportErrorS ::
+    Settings ->
+    Options ->
+    -- | log section
+    Text ->
+    -- | monad-logger logging function. takes a section and a message
+    (Text -> Text -> IO ()) ->
+    Maybe CallStack ->
+    -- | message
+    Text ->
+    IO ()
 reportErrorS = reportLoggerErrorS
-

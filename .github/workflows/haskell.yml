@@ -1,0 +1,34 @@
+name: Redcard CI
+
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache
+        uses: actions/cache@v3
+        env:
+          cache-version: v1
+        with:
+          key: ${{ env.cache-version }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ env.cache-version }}-
+          path: |
+            ./stack-root
+
+      - name: Build
+        run: |
+          set -e
+          mkdir -p ./stack-root
+          mv compose.override.github.yml compose.override.yml
+          echo "PROJECT_DIR=$PWD" >> .env
+          ./scripts/build
