@@ -9,3 +9,4 @@ cabal-dev
 cabal.sandbox.config
 .stack-work
 compose.override.yml
+.env

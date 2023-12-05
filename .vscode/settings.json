@@ -1,0 +1,3 @@
+{
+    "haskell.serverExecutablePath": "${workspaceFolder}/.vim/haskell-language-server-wrapper",
+}
