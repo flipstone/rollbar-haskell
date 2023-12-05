@@ -8,14 +8,29 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 -- | Main entry point to the application.
-module Rollbar where
+module Rollbar (
+    ApiToken (..),
+    UUID (..),
+    Environment (..),
+    Person (..),
+    Settings (..),
+    Options (..),
+    emptyOptions,
+    simpleLogMessage,
+    reportErrorS,
+    reportLoggerErrorS,
+    reportErrorSCustomFingerprint,
+    reportErrorSWithOptions,
+    buildFrameJSON,
+    buildJSON,
+) where
 
 import BasicPrelude
 import Control.Exception.Lifted (catch)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import Control.Monad.Trans.Resource (runResourceT)
 import Data.Aeson hiding (Options)
 import Data.Aeson.TH hiding (Options)
+import Data.Aeson.Types (parseMaybe)
 import Data.Text (pack, toLower)
 import qualified Data.Vector as V
 import GHC.Stack (CallStack, SrcLoc (..), getCallStack)
@@ -23,7 +38,8 @@ import Network.BSD (HostName)
 import Network.HTTP.Conduit (
     Request (method, requestBody),
     RequestBody (RequestBodyLBS),
-    http,
+    Response (..),
+    httpLbs,
     newManager,
     parseUrlThrow,
     tlsManagerSettings,
@@ -32,6 +48,8 @@ import Network.HTTP.Conduit (
 default (Text)
 
 newtype ApiToken = ApiToken {unApiToken :: Text} deriving (Show)
+
+newtype UUID = UUID {unUUID :: Text} deriving (Show)
 
 -- (development, production, etc)
 newtype Environment = Environment {unEnvironment :: Text} deriving (Show)
@@ -61,6 +79,10 @@ data Options = Options
 emptyOptions :: Options
 emptyOptions = Options Nothing Nothing
 
+simpleLogMessage :: (MonadIO m) => Text -> Text -> m ()
+simpleLogMessage section message =
+    putStrLn $ "[Error#" <> section <> "] " <> " " <> message
+
 -- | report errors to rollbar.com and log them to stdout
 reportErrorS ::
     (MonadIO m, MonadBaseControl IO m) =>
@@ -73,9 +95,7 @@ reportErrorS ::
     Text ->
     m ()
 reportErrorS settings opts section =
-    reportLoggerErrorS settings opts section logMessage
-  where
-    logMessage sec message = putStrLn $ "[Error#" `mappend` sec `mappend` "] " `mappend` " " `mappend` message
+    reportLoggerErrorS settings opts section simpleLogMessage
 
 -- | used by Rollbar.MonadLogger to pass a custom logger
 reportLoggerErrorS ::
@@ -91,25 +111,7 @@ reportLoggerErrorS ::
     Text ->
     m ()
 reportLoggerErrorS settings opts section loggerS callstack msg =
-    if reportErrors settings
-        then go
-        else return ()
-  where
-    go =
-        do
-            logger msg
-            liftIO $ do
-                -- It would be more efficient to have the user setup the manager
-                -- But reporting errors should be infrequent
-
-                initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
-                manager <- newManager tlsManagerSettings
-                let req = initReq{method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson}
-                runResourceT $ void $ http req manager
-            `catch` (\(e :: SomeException) -> logger $ pack $ show e)
-
-    logger = loggerS section
-    rollbarJson = buildJSON settings opts section msg Nothing callstack
+    void $ reportErrorSWithOptions settings opts section (Just loggerS) msg Nothing callstack
 
 -- | Pass in custom fingerprint for grouping on rollbar
 reportErrorSCustomFingerprint ::
@@ -120,15 +122,32 @@ reportErrorSCustomFingerprint ::
     Text ->
     -- | logger that takes the section and the message
     Maybe (Text -> Text -> m ()) ->
+    Maybe CallStack ->
     -- | log message
     Text ->
     Text -> -- fingerprint
-    Maybe CallStack ->
     m ()
-reportErrorSCustomFingerprint settings opts section loggerS msg fingerprint callstack =
+reportErrorSCustomFingerprint settings opts section loggerS callstack msg fingerprint =
+    void $ reportErrorSWithOptions settings opts section loggerS msg (Just fingerprint) callstack
+
+-- | Pass in custom fingerprint for grouping on rollbar or a custom logger
+reportErrorSWithOptions ::
+    (MonadIO m, MonadBaseControl IO m) =>
+    Settings ->
+    Options ->
+    -- | log section
+    Text ->
+    -- | logger that takes the section and the message
+    Maybe (Text -> Text -> m ()) ->
+    -- | log message
+    Text ->
+    Maybe Text -> -- fingerprint
+    Maybe CallStack ->
+    m (Maybe UUID)
+reportErrorSWithOptions settings opts section loggerS msg fingerprint callstack =
     if reportErrors settings
         then go
-        else return ()
+        else pure Nothing
   where
     go =
         do
@@ -137,12 +156,22 @@ reportErrorSCustomFingerprint settings opts section loggerS msg fingerprint call
                 initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
                 manager <- newManager tlsManagerSettings
                 let req = initReq{method = "POST", requestBody = RequestBodyLBS $ encode rollbarJson}
-                runResourceT $ void $ http req manager
-            `catch` (\(e :: SomeException) -> logger $ pack $ show e)
+                response <- httpLbs req manager
+                let body = responseBody response
+                    uuid =
+                        fmap UUID
+                            $ parseMaybe
+                                ( \obj -> do
+                                    result <- obj .: "result"
+                                    result .: "uuid"
+                                )
+                            =<< decode body
+                pure uuid
+            `catch` (\(e :: SomeException) -> Nothing <$ logger (pack $ show e))
 
     logger = fromMaybe defaultLogger loggerS section
-    defaultLogger message = pure $ putStrLn $ "[Error#" `mappend` section `mappend` "] " `mappend` " " `mappend` message
-    rollbarJson = buildJSON settings opts section msg (Just fingerprint) callstack
+    defaultLogger message = pure $ simpleLogMessage section message
+    rollbarJson = buildJSON settings opts section msg fingerprint callstack
 
 buildFrameJSON :: (String, SrcLoc) -> Value
 buildFrameJSON (name, srcLoc) =
@@ -178,7 +207,7 @@ buildJSON settings opts section msg fingerprint callstack =
                         .= object
                             [ "trace"
                                 .= object
-                                    [ "frames" .= (Array $ V.fromList $ maybe [] (map buildFrameJSON . getCallStack) callstack)
+                                    [ "frames" .= Array (V.fromList $ maybe [] (map buildFrameJSON . getCallStack) callstack)
                                     , "exception" .= object ["class" .= section, "message" .= msg]
                                     ]
                             ]

@@ -2,11 +2,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Rollbar.MonadLogger where
+module Rollbar.MonadLogger (reportErrorS) where
 
 import BasicPrelude
 
-import Rollbar
+import Rollbar hiding (reportErrorS)
 
 import GHC.Stack (CallStack)
 
