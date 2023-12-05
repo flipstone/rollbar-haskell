@@ -1,5 +1,5 @@
 name:                rollbar
-version:             2.1.0
+version:             2.0.0
 synopsis:            error tracking through rollbar.com
 homepage:            https://github.com/flipstone/rollbar-haskell
 license:             MIT
