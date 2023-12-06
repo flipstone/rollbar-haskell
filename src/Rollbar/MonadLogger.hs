@@ -1,27 +1,19 @@
-{-# LANGUAGE ExtendedDefaultRules #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-
 module Rollbar.MonadLogger (reportErrorS) where
 
-import BasicPrelude
-
-import Rollbar hiding (reportErrorS)
-
-import GHC.Stack (CallStack)
-
-default (Text)
+import qualified Data.Text as T
+import GHC.Exception (CallStack)
+import qualified Rollbar
 
 -- | report errors to rollbar.com and log them with monad-logger
 reportErrorS ::
-    Settings ->
-    Options ->
-    -- | log section
-    Text ->
-    -- | monad-logger logging function. takes a section and a message
-    (Text -> Text -> IO ()) ->
-    Maybe CallStack ->
-    -- | message
-    Text ->
-    IO ()
-reportErrorS = reportLoggerErrorS
+  Rollbar.Settings ->
+  Rollbar.Options ->
+  -- | log section
+  T.Text ->
+  -- | monad-logger logging function. takes a section and a message
+  (T.Text -> T.Text -> IO ()) ->
+  Maybe CallStack ->
+  -- | message
+  T.Text ->
+  IO ()
+reportErrorS = Rollbar.reportLoggerErrorS
