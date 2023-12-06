@@ -216,13 +216,13 @@ buildJSON settings opts section msg fingerprint callstack =
                         ]
                   ]
             ]
-              ++ fp
+              <> fp
           )
     , "title" .= title
     , "notifier"
         .= Aeson.object
           [ "name" .= ("rollbar-haskell" :: T.Text)
-          , "version" .= ("1.1.3" :: T.Text)
+          , "version" .= ("2.1.0" :: T.Text)
           ]
     ]
  where
