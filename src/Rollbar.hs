@@ -9,6 +9,7 @@ module Rollbar
   , Person (..)
   , Settings (..)
   , Options (..)
+  , ErrorLevel (..)
   , emptyOptions
   , simpleLogMessage
   , reportErrorS
@@ -31,7 +32,6 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import GHC.Stack (CallStack, SrcLoc (..), getCallStack)
-import Network.BSD (HostName)
 import Network.HTTP.Conduit
   ( Request (method, requestBody)
   , RequestBody (RequestBodyLBS)
@@ -67,7 +67,7 @@ instance Aeson.ToJSON Person where
 data Settings = Settings
   { environment :: Environment
   , token :: ApiToken
-  , hostName :: HostName
+  , hostName :: String
   , reportErrors :: Bool
   }
   deriving (Show)
@@ -77,6 +77,23 @@ data Options = Options
   , optionsRevisionSha :: Maybe T.Text
   }
   deriving (Show)
+
+data ErrorLevel
+  = Critical
+  | Error
+  | Warning
+  | Info
+  | Debug
+
+instance Aeson.ToJSON ErrorLevel where
+  toJSON lvl =
+    Aeson.String $
+      case lvl of
+        Critical -> "critical"
+        Error -> "error"
+        Warning -> "warning"
+        Info -> "info"
+        Debug -> "debug"
 
 emptyOptions :: Options
 emptyOptions = Options Nothing Nothing
@@ -93,6 +110,7 @@ reportErrorS ::
   -- | log section
   T.Text ->
   Maybe CallStack ->
+  ErrorLevel ->
   -- | log message
   T.Text ->
   m ()
@@ -109,11 +127,12 @@ reportLoggerErrorS ::
   -- | logger that takes the section and the message
   (T.Text -> T.Text -> m ()) ->
   Maybe CallStack ->
+  ErrorLevel ->
   -- | log message
   T.Text ->
   m ()
-reportLoggerErrorS settings opts section loggerS callstack msg =
-  Monad.void $ reportErrorSWithOptions settings opts section (Just loggerS) msg Nothing callstack
+reportLoggerErrorS settings opts section loggerS callstack errorLevel msg =
+  Monad.void $ reportErrorSWithOptions settings opts section (Just loggerS) msg Nothing callstack errorLevel
 
 -- | Pass in custom fingerprint for grouping on rollbar
 reportErrorSCustomFingerprint ::
@@ -125,12 +144,13 @@ reportErrorSCustomFingerprint ::
   -- | logger that takes the section and the message
   Maybe (T.Text -> T.Text -> m ()) ->
   Maybe CallStack ->
+  ErrorLevel ->
   -- | log message
   T.Text ->
   T.Text -> -- fingerprint
   m ()
-reportErrorSCustomFingerprint settings opts section loggerS callstack msg fingerprint =
-  Monad.void $ reportErrorSWithOptions settings opts section loggerS msg (Just fingerprint) callstack
+reportErrorSCustomFingerprint settings opts section loggerS callstack errorLevel msg fingerprint =
+  Monad.void $ reportErrorSWithOptions settings opts section loggerS msg (Just fingerprint) callstack errorLevel
 
 -- | Pass in custom fingerprint for grouping on rollbar or a custom logger
 reportErrorSWithOptions ::
@@ -145,8 +165,9 @@ reportErrorSWithOptions ::
   T.Text ->
   Maybe T.Text -> -- fingerprint
   Maybe CallStack ->
+  ErrorLevel ->
   m (Maybe UUID)
-reportErrorSWithOptions settings opts section loggerS msg fingerprint callstack =
+reportErrorSWithOptions settings opts section loggerS msg fingerprint callstack errorLevel =
   if reportErrors settings
     then go
     else pure Nothing
@@ -175,7 +196,7 @@ reportErrorSWithOptions settings opts section loggerS msg fingerprint callstack 
 
   logger = Maybe.fromMaybe defaultLogger loggerS section
   defaultLogger message = pure $ simpleLogMessage section message
-  rollbarJson = buildJSON settings opts section msg fingerprint callstack
+  rollbarJson = buildJSON settings opts section msg fingerprint callstack errorLevel
 
 buildFrameJSON :: (String, SrcLoc) -> Aeson.Value
 buildFrameJSON (name, srcLoc) =
@@ -197,14 +218,15 @@ buildJSON ::
   -- | fingerprint
   Maybe T.Text ->
   Maybe CallStack ->
+  ErrorLevel ->
   Aeson.Value
-buildJSON settings opts section msg fingerprint callstack =
+buildJSON settings opts section msg fingerprint callstack level =
   Aeson.object
     [ "access_token" .= unApiToken (token settings)
     , "data"
         .= Aeson.object
           ( [ "environment" .= T.toLower (unEnvironment $ environment settings)
-            , "level" .= ("error" :: T.Text)
+            , "level" .= Aeson.toJSON level
             , "server" .= Aeson.object ["host" .= hostName settings, "sha" .= optionsRevisionSha opts]
             , "person" .= Aeson.toJSON (optionsPerson opts)
             , "body"
@@ -222,7 +244,7 @@ buildJSON settings opts section msg fingerprint callstack =
     , "notifier"
         .= Aeson.object
           [ "name" .= ("rollbar-haskell" :: T.Text)
-          , "version" .= ("2.1.0" :: T.Text)
+          , "version" .= ("2.2.0" :: T.Text)
           ]
     ]
  where

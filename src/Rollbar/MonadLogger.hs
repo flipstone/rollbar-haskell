@@ -13,6 +13,7 @@ reportErrorS ::
   -- | monad-logger logging function. takes a section and a message
   (T.Text -> T.Text -> IO ()) ->
   Maybe CallStack ->
+  Rollbar.ErrorLevel ->
   -- | message
   T.Text ->
   IO ()
