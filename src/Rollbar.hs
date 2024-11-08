@@ -1,5 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Main entry point to the application.
 module Rollbar
@@ -20,17 +19,18 @@ module Rollbar
   , buildJSON
   ) where
 
-import qualified Control.Exception as Ex
+import Control.Exception qualified as Ex
 import Control.Exception.Lifted (catch)
-import qualified Control.Monad as Monad
-import qualified Control.Monad.IO.Class as MIO
+import Control.Monad qualified as Monad
+import Control.Monad.IO.Class qualified as MIO
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Aeson ((.:), (.=))
-import qualified Data.Aeson as Aeson
+import Data.Aeson qualified as Aeson
 import Data.Aeson.Types (parseMaybe)
-import qualified Data.Maybe as Maybe
-import qualified Data.Text as T
-import qualified Data.Vector as V
+import Data.Maybe qualified as Maybe
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as Enc
+import Data.Vector qualified as V
 import GHC.Stack (CallStack, SrcLoc (..), getCallStack)
 import Network.HTTP.Conduit
   ( Request (method, requestBody)
@@ -39,6 +39,7 @@ import Network.HTTP.Conduit
   , httpLbs
   , newManager
   , parseUrlThrow
+  , requestHeaders
   , tlsManagerSettings
   )
 
@@ -70,7 +71,6 @@ data Settings = Settings
   , hostName :: String
   , reportErrors :: Bool
   }
-  deriving (Show)
 
 data Options = Options
   { optionsPerson :: Maybe Person
@@ -176,11 +176,16 @@ reportErrorSWithOptions settings opts section loggerS msg fingerprint callstack 
     do
       logger msg
       MIO.liftIO $ do
-        initReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
+        unauthenticatedReq <- parseUrlThrow "https://api.rollbar.com/api/1/item/"
         manager <- newManager tlsManagerSettings
         let
-          req = initReq {method = "POST", requestBody = RequestBodyLBS $ Aeson.encode rollbarJson}
-        response <- httpLbs req manager
+          authenticatedRequest =
+            unauthenticatedReq
+              { method = "POST"
+              , requestHeaders = [("X-Rollbar-Access-Token", Enc.encodeUtf8 . unApiToken $ token settings)]
+              , requestBody = RequestBodyLBS $ Aeson.encode rollbarJson
+              }
+        response <- httpLbs authenticatedRequest manager
         let
           body = responseBody response
           uuid =
@@ -222,12 +227,13 @@ buildJSON ::
   Aeson.Value
 buildJSON settings opts section msg fingerprint callstack level =
   Aeson.object
-    [ "access_token" .= unApiToken (token settings)
-    , "data"
+    [ "data"
         .= Aeson.object
           ( [ "environment" .= T.toLower (unEnvironment $ environment settings)
             , "level" .= Aeson.toJSON level
-            , "server" .= Aeson.object ["host" .= hostName settings, "sha" .= optionsRevisionSha opts]
+            , "code_version" .= optionsRevisionSha opts
+            , "language" .= ("haskell" :: T.Text)
+            , "server" .= Aeson.object ["host" .= hostName settings]
             , "person" .= Aeson.toJSON (optionsPerson opts)
             , "body"
                 .= Aeson.object

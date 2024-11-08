@@ -1,8 +1,10 @@
-module Rollbar.MonadLogger (reportErrorS) where
+module Rollbar.MonadLogger
+  ( reportErrorS
+  ) where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import GHC.Exception (CallStack)
-import qualified Rollbar
+import Rollbar qualified
 
 -- | report errors to rollbar.com and log them with monad-logger
 reportErrorS ::
