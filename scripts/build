@@ -3,4 +3,4 @@
 set -e
 
 ./scripts/format-repo
-./scripts/build-library
+./scripts/test-all

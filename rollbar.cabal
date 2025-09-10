@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           rollbar
-version:        2.2.1
+version:        2.2.1.1
 synopsis:       error tracking through rollbar.com
 category:       Logging
 homepage:       https://github.com/flipstone/rollbar-haskell
@@ -14,6 +14,13 @@ maintainer:     development@flipstone.com
 copyright:      Daggerboard Inc. makers of docmunch.com, Azara Solutions Inc.
 license:        MIT
 build-type:     Simple
+tested-with:
+    GHC == 8.10.7, GHC == 9.0.2, GHC == 9.4.7, GHC == 9.6.7, GHC == 9.8.4, GHC == 9.10.2
+
+flag ci
+  description: More strict ghc options used for development and ci, not intended for end-use.
+  manual: True
+  default: False
 
 library
   exposed-modules:
@@ -23,7 +30,10 @@ library
       Paths_rollbar
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fno-warn-orphans
+  default-extensions:
+      ScopedTypeVariables
+      ImportQualifiedPost
+      FlexibleContexts
   build-depends:
       aeson >=1.2 && <2.3
     , base >=4.6 && <5
@@ -34,4 +44,10 @@ library
     , resourcet >=1.1 && <1.4
     , text >=1.2 && <2.2
     , vector >=0.12 && <0.14
-  default-language: GHC2021
+  default-language: Haskell2010
+  if flag(ci)
+    ghc-options: -Wall -Werror -Wcompat -Wcpp-undef -Widentities -Wincomplete-uni-patterns -Wincomplete-patterns -Wincomplete-record-updates -Wmissing-export-lists -Wnoncanonical-monad-instances -Wredundant-constraints -Wpartial-fields -Wmissed-specialisations -Wno-implicit-prelude -Wno-safe -Wno-unsafe
+    if impl (ghc >= 9.8)
+      ghc-options: -Wterm-variable-capture -Wextended-warnings
+  else
+    ghc-options: -Wall

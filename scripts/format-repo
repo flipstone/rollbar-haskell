@@ -5,6 +5,7 @@ set -e
 source scripts/lib/run-in-container.sh
 
 if [ "$CI" ]; then
+  git config --global --add safe.directory $PWD
   MODE=check
 else
   MODE=inplace
