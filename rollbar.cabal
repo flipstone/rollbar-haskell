@@ -31,7 +31,6 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      ScopedTypeVariables
       ImportQualifiedPost
       FlexibleContexts
   build-depends:
