@@ -1,5 +1,5 @@
 name:                rollbar
-version:             2.2.1.1
+version:             2.0.0.0
 synopsis:            error tracking through rollbar.com
 homepage:            https://github.com/flipstone/rollbar-haskell
 license:             MIT
@@ -15,7 +15,7 @@ default-extensions:
   - FlexibleContexts
 
 tested-with:
-   GHC == 8.10.7, GHC == 9.0.2, GHC == 9.4.7, GHC == 9.6.7, GHC == 9.8.4, GHC == 9.10.2
+   GHC == 8.10.7, GHC == 9.0.2, GHC == 9.4.7, GHC == 9.6.7, GHC == 9.8.4, GHC == 9.10.2, GHC == 9.12.2
 
 flags:
   ci:
