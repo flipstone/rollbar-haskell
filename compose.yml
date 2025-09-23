@@ -1,6 +1,6 @@
 services:
   dev:
-    image: ghcr.io/flipstone/haskell-tools:debian-ghc-9.6.6-54c3115
+    image: ghcr.io/flipstone/haskell-tools:debian-ghc-9.10.3-0c9045f
     environment:
       STACK_ROOT: /stack-root
       IN_DEV_CONTAINER: 'true'
