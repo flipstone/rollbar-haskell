@@ -9,5 +9,6 @@ cabal-dev
 cabal.sandbox.config
 .stack-work
 compose.override.yml
+compose.override.yaml
 .env
 test-all-logs
