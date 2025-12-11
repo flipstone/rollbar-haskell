@@ -3,9 +3,9 @@ version:             2.0.0.0
 synopsis:            error tracking through rollbar.com
 homepage:            https://github.com/flipstone/rollbar-haskell
 license:             MIT
-author:              Flipstone Technology Partners
-maintainer:          development@flipstone.com
-copyright:           Daggerboard Inc. makers of docmunch.com, Azara Solutions Inc.
+author:              Daggerboard Inc., Azara Solutions Inc., Flipstone Technology Partners
+maintainer:          maintainers@flipstone.com
+copyright:           Daggerboard Inc. makers of docmunch.com, Azara Solutions Inc., 2025 Flipstone Technology Partners
 category:            Logging
 
 language: Haskell2010
