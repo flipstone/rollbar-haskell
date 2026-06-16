@@ -14,7 +14,7 @@ defaults:
 jobs:
   find-stack-yamls:
     name: Find stack.yamls for GHC Matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       stack-yamls: ${{ steps.set-output.outputs.stack-yamls }}
     steps:
@@ -25,7 +25,7 @@ jobs:
   build:
     name: Build and Test
     needs: find-stack-yamls
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       max-parallel: 5
       matrix:
@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-version: v3
         with:
@@ -56,10 +56,10 @@ jobs:
 
   cabal-check:
     name: Cabal Check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Stack (for docker env)
         uses: flipstone/github-actions/setup-dockerized-stack@d3da7b6361e88fc10557f8b6ca9aaf44e13f0f8e
