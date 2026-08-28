@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         env:
           cache-version: v3
         with:
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Stack (for docker env)
         uses: flipstone/github-actions/setup-dockerized-stack@3dac943f10ac962138e25ccceaf6aba4d18396ee # v2026.8.28.2
