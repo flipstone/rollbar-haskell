@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # The haskell-tools dev image pinned in compose.yaml. It is pinned to a
+  # release tag plus digest, which is what makes it visible to Dependabot at
+  # all; a per-commit sha tag is not comparable. Bumps stay within the pinned
+  # GHC version: the GHC version sits in the part of the tag Dependabot treats
+  # as an opaque prefix, so a GHC upgrade stays a deliberate manual re-pin
+  # alongside the resolver changes it requires.
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  # One PR for all action bumps rather than one PR per action.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
