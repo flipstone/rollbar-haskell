@@ -4,6 +4,7 @@ module Rollbar.MonadLogger
 
 import Data.Text qualified as T
 import GHC.Exception (CallStack)
+
 import Rollbar qualified
 
 -- | report errors to rollbar.com and log them with monad-logger
