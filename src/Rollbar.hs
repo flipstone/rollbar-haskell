@@ -240,7 +240,7 @@ buildJSON settings opts section msg fingerprint callstack level =
                 .= Aeson.object
                   [ "trace"
                       .= Aeson.object
-                        [ "frames" .= Aeson.Array (V.fromList $ maybe [] (map buildFrameJSON . getCallStack) callstack)
+                        [ "frames" .= Aeson.Array (V.fromList $ maybe [] (map buildFrameJSON . reverse . getCallStack) callstack)
                         , "exception" .= Aeson.object ["class" .= section, "message" .= msg]
                         ]
                   ]
