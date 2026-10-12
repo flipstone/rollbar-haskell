@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Find Stack Yamls
         id: set-output
-        uses: flipstone/github-actions/find-stack-ghc-yamls@3dac943f10ac962138e25ccceaf6aba4d18396ee # v2026.8.28.2
+        uses: flipstone/github-actions/find-stack-ghc-yamls@bd092a70aa6a3452be380b8c55cb6fbf9042ffca # v2026.9.30.3
 
   build:
     name: Build and Test
@@ -47,7 +47,7 @@ jobs:
             ./stack-root
 
       - name: Setup Stack
-        uses: flipstone/github-actions/setup-dockerized-stack@3dac943f10ac962138e25ccceaf6aba4d18396ee # v2026.8.28.2
+        uses: flipstone/github-actions/setup-dockerized-stack@bd092a70aa6a3452be380b8c55cb6fbf9042ffca # v2026.9.30.3
         with:
           stack-root: ./stack-root
 
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Stack (for docker env)
-        uses: flipstone/github-actions/setup-dockerized-stack@3dac943f10ac962138e25ccceaf6aba4d18396ee # v2026.8.28.2
+        uses: flipstone/github-actions/setup-dockerized-stack@bd092a70aa6a3452be380b8c55cb6fbf9042ffca # v2026.9.30.3
         with:
           stack-root: ./stack-root
 
