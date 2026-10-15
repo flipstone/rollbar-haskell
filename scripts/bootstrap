@@ -14,3 +14,26 @@ if [ -f .env ]; then
 else
   echo "PROJECT_DIR=$PWD" >> .env
 fi
+
+if ! grep -q '^GIT_COMMON_DIR=' .env; then
+  GIT_COMMON_DIR_RAW="$(git rev-parse --git-common-dir)"
+
+  if [ "$GIT_COMMON_DIR_RAW" != ".git" ]; then
+    GIT_COMMON_DIR="$(readlink --canonicalize "$GIT_COMMON_DIR_RAW")"
+    echo "GIT_COMMON_DIR=$GIT_COMMON_DIR" >> .env
+    echo "Detected git worktree. Main git dir: $GIT_COMMON_DIR"
+  else
+    echo "GIT_COMMON_DIR=" >> .env
+  fi
+fi
+
+GIT_COMMON_DIR_RAW="$(git rev-parse --git-common-dir)"
+if [ "$GIT_COMMON_DIR_RAW" != ".git" ]; then
+  MAIN_PROJECT_DIR="$(dirname "$(readlink --canonicalize "$GIT_COMMON_DIR_RAW")")"
+  for override in compose.override.yaml compose.override.yml; do
+    if [ ! -f "$override" ] && [ -f "$MAIN_PROJECT_DIR/$override" ]; then
+      cp "$MAIN_PROJECT_DIR/$override" "$override"
+      echo "Copied $override from main project dir: $MAIN_PROJECT_DIR"
+    fi
+  done
+fi

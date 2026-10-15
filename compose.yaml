@@ -9,6 +9,7 @@ services:
       CI:
     volumes:
       - .:${PROJECT_DIR}
+      - ${GIT_COMMON_DIR:-.gitignore}:${GIT_COMMON_DIR:-/tmp/no-git-common-dir}
       - flipstone_stack_root:/stack-root
     working_dir: ${PROJECT_DIR}
     tty: true
